@@ -1,0 +1,63 @@
+# CI for the push relay: its test suite on every push and pull request, and the DCO sign-off
+# check on pull requests. The suite is what holds the relay's one security claim — it is
+# stateless and content-free, and its log audit fails on any record that carries more than ids.
+name: CI
+
+on:
+  push:
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+      - name: Install the relay with its test extras
+        # A uv-managed venv, not `--system`: the runner's /usr is PEP-668 externally-managed.
+        run: |
+          uv venv --python 3.12 .venv
+          uv pip install --python "$PWD/.venv/bin/python" -e ".[dev]"
+      - name: Run the tests
+        run: .venv/bin/python -m pytest -q
+
+  dco:
+    # Every commit in a PR carries a Signed-off-by trailer (`git commit -s`), same
+    # provenance rule as core and the apps repo. Pure-git check, PR-only.
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Verify DCO sign-off on every commit
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          missing=0
+          for sha in $(git rev-list "$BASE_SHA".."$HEAD_SHA"); do
+            email="$(git show -s --format='%ae' "$sha")"
+            # A bot can't sign off, and dependency bumps are provenance-clear. Per-COMMIT,
+            # so a maintainer fix pushed onto a dependabot branch is still checked.
+            case "$email" in
+              *dependabot*@users.noreply.github.com) continue ;;
+            esac
+            author="$(git show -s --format='%an <%ae>' "$sha")"
+            if ! git show -s --format='%(trailers:key=Signed-off-by,valueonly)' "$sha" | grep -qF "$author"; then
+              echo "::error::commit $sha is missing a matching 'Signed-off-by: $author' trailer — run: git commit -s (or git rebase --signoff)"
+              missing=1
+            fi
+          done
+          [ "$missing" -eq 0 ] && echo "DCO: all commits signed off."
+          exit "$missing"
