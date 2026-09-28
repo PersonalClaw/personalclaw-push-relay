@@ -1,0 +1,27 @@
+[project]
+name = "personalclaw-push-relay"
+version = "0.1.0"
+description = "Stateless, content-free push relay for the PersonalClaw mobile companion — forwards ids-only wake-up pings to APNs/FCM. Self-deployable; the hosted instance is a convenience, never a dependency."
+requires-python = ">=3.11"
+license = { text = "MIT" }
+dependencies = [
+    "aiohttp>=3.9",
+    "httpx[http2]>=0.27",
+    "PyJWT[crypto]>=2.8",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "pytest-aiohttp>=1.0"]
+
+[project.scripts]
+push-relay = "relay.app:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["relay*"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
