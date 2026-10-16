@@ -29,8 +29,8 @@ of this service. To stay inside the rule, the relay is:
   Never the device token, never anything else. `tests/test_relay.py` pins this with a
   log-capture audit fixture, so the promise is a regression test.
 
-Deploy it yourself with your own APNs/FCM credentials — the hosted instance is a
-convenience, never a dependency.
+Deploy it yourself, with the APNs/FCM credentials of the app it sends for. No hosted
+instance is run for you.
 
 ## Run
 

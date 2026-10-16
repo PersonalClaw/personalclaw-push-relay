@@ -1,7 +1,7 @@
 [project]
 name = "personalclaw-push-relay"
 version = "0.1.0"
-description = "Stateless, content-free push relay for the PersonalClaw mobile companion — forwards ids-only wake-up pings to APNs/FCM. Self-deployable; the hosted instance is a convenience, never a dependency."
+description = "Stateless, content-free push relay for the PersonalClaw mobile companion — forwards ids-only wake-up pings to APNs/FCM. Deployed by whoever holds the app's push credentials."
 requires-python = ">=3.11"
 license = { text = "MIT" }
 dependencies = [
